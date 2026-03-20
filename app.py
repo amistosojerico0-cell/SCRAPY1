@@ -149,6 +149,7 @@ def index():
         'service':          'scrappy',
         'base44_enabled':   BASE44_ENABLED,
         'available_cities': ['san_diego', 'los_angeles'] + list(CITY_CONFIGS.keys()),
+        'runscan':          'GET /runscan — multi-city test scan on server (POST /runscan/sync)',
     })
 
 
@@ -271,6 +272,58 @@ def scrape_sync():
         return jsonify({'success': False, 'error': str(e)}), 501
     except ValueError as e:
         return jsonify({'success': False, 'error': str(e)}), 400
+
+
+def _check_internal_secret():
+    """If INTERNAL_SECRET is set in env, require matching x-internal-secret header."""
+    secret = os.environ.get('INTERNAL_SECRET', '')
+    if secret and request.headers.get('x-internal-secret') != secret:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    return None
+
+
+@app.route('/runscan', methods=['GET'])
+def runscan_help():
+    """Docs for POST /runscan/sync — multi-city scan on this server (Playwright on Render)."""
+    return jsonify({
+        'endpoint':       'POST /runscan/sync',
+        'content_type':   'application/json',
+        'body':           {'days': 4, 'cities': ['sandiego', 'chulavista']},
+        'header_optional': 'x-internal-secret: <INTERNAL_SECRET> (required if set on server)',
+        'note':           'Runs Accela scraper on this host. Use runscan.py --remote <url> from your laptop.',
+        'timeout':        'Long requests may hit Render/proxy limits — shorten days/cities if needed.',
+    })
+
+
+@app.route('/runscan/sync', methods=['POST'])
+def runscan_sync():
+    """
+    Multi-city Accela scan — executes on Render (same Playwright env as production).
+    JSON body: {"days": 4, "cities": ["sandiego", "chulavista"]}
+    """
+    err = _check_internal_secret()
+    if err:
+        return err
+    data = request.json or {}
+    try:
+        days = int(data.get('days', 3))
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'error': 'days must be an integer'}), 400
+    cities = data.get('cities', [])
+    if not cities or not isinstance(cities, list):
+        return jsonify({'success': False, 'error': 'cities must be a non-empty array of strings'}), 400
+    cities = [str(c) for c in cities]
+
+    try:
+        from runscan_core import execute_runscan
+        payload = execute_runscan(days, cities)
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        log.exception('runscan_sync failed')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+    return jsonify(payload)
 
 
 @app.route('/cities')

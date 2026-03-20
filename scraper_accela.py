@@ -107,163 +107,12 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# City configs
+# City configs — loaded from cities/ folder (one file per city)
+# Add new cities by creating cities/<name>.py with CONFIGS dict.
 # ---------------------------------------------------------------------------
-CITY_CONFIGS = {
-    'chula_vista': {
-        'name':        'Chula Vista',
-        'base_url':    'https://aca-prod.accela.com/CHULAVISTA',
-        'module':      'Building',
-        'permit_type': 'Residential Solar Energy',
-        'source':      'chula_vista_accela',
-    },
-    'chula_vista_commercial': {
-        'name':        'Chula Vista',
-        'base_url':    'https://aca-prod.accela.com/CHULAVISTA',
-        'module':      'Building',
-        'permit_type': 'Commercial Solar Energy',
-        'source':      'chula_vista_accela',
-        'lead_category': 'commercial',
-    },
-    'chula_vista_solarapp': {
-        'name':        'Chula Vista',
-        'base_url':    'https://aca-prod.accela.com/CHULAVISTA',
-        'module':      'Building',
-        'permit_type': 'Solar Permit with SolarApp+',
-        'source':      'chula_vista_accela',
-        'lead_category': 'residential',
-    },
-    'oakland': {
-        'name':        'Oakland',
-        'base_url':    'https://aca-prod.accela.com/OAKLAND',
-        'module':      'Building',
-        'permit_type': 'Solar Permit (For commercial projects, residential projects not eligible for SolarApp+, or owner/builder or contractor use)',
-        'source':      'oakland_accela',
-        'col_date':         1,
-        'col_permit_num':   3,
-        'col_permit_type':  4,
-        'col_description':  6,
-        'col_project_name': None,
-        'col_status':       2,
-        'col_action':       None,
-        'col_short_notes':  None,
-        'col_address':      5,
-    },
-    'oakland_solarapp': {
-        'name':        'Oakland',
-        'base_url':    'https://aca-prod.accela.com/OAKLAND',
-        'module':      'Building',
-        'permit_type': 'SolarApp+ (For roof mounted residential solar projects not exceeding 38.4kw total done with SolarApp+- contractor use)',
-        'source':      'oakland_accela',
-        'lead_category': 'residential',
-        'col_date':         1,
-        'col_permit_num':   3,
-        'col_permit_type':  4,
-        'col_description':  6,
-        'col_project_name': None,
-        'col_status':       2,
-        'col_action':       None,
-        'col_short_notes':  None,
-        'col_address':      5,
-    },
-    'palmdale': {
-        'name':        'Palmdale',
-        'base_url':    'https://aca-prod.accela.com/PALMDALE',
-        'module':      'Building',
-        'permit_type': 'Solar Permit (Commercial, Ground Mount, ESS 400lbs or Higher, or Adding to Existing System)',
-        'source':      'palmdale_accela',
-    },
-    'downey': {
-        'name':        'Downey',
-        'base_url':    'https://aca-prod.accela.com/DOWNEY',
-        'module':      'Building',
-        'permit_type': 'Residential Solar',
-        'source':      'downey_accela',
-    },
-    'sacramento': {
-        'name':        'Sacramento',
-        'base_url':    'https://aca-prod.accela.com/SACRAMENTO',
-        'module':      'Building',
-        'permit_type': None,
-        'source':      'sacramento_accela',
-    },
-    'santa_ana': {
-        'name':        'Santa Ana',
-        'base_url':    'https://aca-prod.accela.com/SANTAANA',
-        'module':      'Building',
-        'permit_type': None,
-        'source':      'santa_ana_accela',
-    },
-    'fontana': {
-        'name':        'Fontana',
-        'base_url':    'https://aca-prod.accela.com/FONTANA',
-        'module':      'Building',
-        'permit_type': None,
-        'source':      'fontana_accela',
-    },
-    'concord': {
-        'name':        'Concord',
-        'base_url':    'https://aca-prod.accela.com/CONCORD',
-        'module':      'Building',
-        'permit_type': None,
-        'source':      'concord_accela',
-    },
-    'berkeley': {
-        'name':        'Berkeley',
-        'base_url':    'https://aca-prod.accela.com/BERKELEY',
-        'module':      'Building',
-        'permit_type': None,
-        'source':      'berkeley_accela',
-    },
-    'anaheim': {
-        'name':        'Anaheim',
-        'base_url':    'https://aca-prod.accela.com/ANAHEIM',
-        'module':      'Building',
-        'permit_type': None,
-        'source':      'anaheim_accela',
-    },
+from cities import get_city_configs
 
-    # San Diego County — different portal, same Accela engine
-    'san_diego_residential': {
-        'name':               'San Diego',
-        'base_url':           'https://publicservices.sandiegocounty.gov/CitizenAccess',
-        'module':             'Building',
-        'permit_type':        'Residential Alteration or Addition',
-        'use_project_name':   'otc',
-        'source':             'san_diego_accela',
-        'lead_category':      'residential',
-        'daily_only':         True,
-        'owner_from_contacts': True,
-        'col_date':           1,
-        'col_permit_num':     None,
-        'col_permit_type':    3,
-        'col_description':    4,
-        'col_project_name':   5,
-        'col_status':         6,
-        'col_short_notes':    8,
-        'col_address':        9,
-    },
-    'san_diego_commercial': {
-        'name':               'San Diego',
-        'base_url':           'https://publicservices.sandiegocounty.gov/CitizenAccess',
-        'module':             'Building',
-        'permit_type':        'Commercial Alteration or Addition',
-        'use_project_name':   None,
-        'source':             'san_diego_accela',
-        'lead_category':      'commercial',
-        'daily_only':         True,
-        'short_notes_filter': '8004',
-        'owner_from_contacts': True,
-        'col_date':           1,
-        'col_permit_num':     None,
-        'col_permit_type':    3,
-        'col_description':    4,
-        'col_project_name':   5,
-        'col_status':         6,
-        'col_short_notes':    8,
-        'col_address':        9,
-    },
-}
+CITY_CONFIGS = get_city_configs()
 
 
 # ---------------------------------------------------------------------------
@@ -285,10 +134,14 @@ async def scrape_accela_async(config: dict, start_date: str, end_date: str):
         page = await context.new_page()
 
         try:
-            search_url = (
-                f'{base_url}/Cap/CapHome.aspx?module={module}'
-                f'&TabName={module}&TabList=HOME%7C0%7C{module}%7C1%7CCurrentTabIndex%7C1'
-            )
+            # Use portal_url override if set (e.g. San Diego uses Default.aspx entry)
+            if config.get('portal_url'):
+                search_url = config['portal_url']
+            else:
+                search_url = (
+                    f'{base_url}/Cap/CapHome.aspx?module={module}'
+                    f'&TabName={module}&TabList=HOME%7C0%7C{module}%7C1%7CCurrentTabIndex%7C1'
+                )
             log.info(f'[{city_name}] Loading search form directly: {search_url}')
             await page.goto(search_url, wait_until='networkidle')
             await page.wait_for_timeout(3000)
